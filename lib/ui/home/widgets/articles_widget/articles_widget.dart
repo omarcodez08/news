@@ -1,39 +1,141 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:news/ui/home/widgets/articles_widget/widgets/articles_list.dart';
+import 'package:news/ui/home/widgets/articles_widget/view_model/articles_view_model.dart';
+import 'package:news/ui/home/widgets/articles_widget/widgets/article_list/articles_list.dart';
+import 'package:provider/provider.dart';
 
-import '../../../../core/resources/app_constants.dart';
+import '../../../../model/sources/Source.dart';
 
-class ArticlesWidget extends StatelessWidget {
-  const ArticlesWidget({super.key});
+class ArticlesWidget extends StatefulWidget {
+  final String categoryId;
+  const ArticlesWidget({super.key,required this.categoryId});
 
   @override
+  State<ArticlesWidget> createState() => _ArticlesWidgetState();
+}
+
+class _ArticlesWidgetState extends State<ArticlesWidget> {
+  @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: AppConstants.dummySourcesList.length,
-      child: Padding(
-        padding: REdgeInsetsDirectional.only(
-            top: 16,
-            start: 16
-        ),
-        child: Column(
-          spacing: 16.h,
-          children: [
-            TabBar(
-              isScrollable: true,
-              tabs: AppConstants.dummySourcesList
-                  .map((source) => Tab(text: source))
-                  .toList(),
+    return ChangeNotifierProvider(
+      create: (context) => ArticlesViewModel()..getSources(widget.categoryId),
+      child: Consumer<ArticlesViewModel>(
+        builder: (context, viewModel, child) {
+          if(viewModel.isLoading){
+            return Center(child: CircularProgressIndicator(),);
+          }
+          if(viewModel.errorMessage!=null){
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(viewModel.errorMessage!),
+                  ElevatedButton(onPressed: () {
+                    setState(() {
+
+                    });
+                  }, child: Text("Try Again"))
+                ],
+              ),
+            );
+          }
+          List<Source> sources = viewModel.sourcesList??[];
+          return DefaultTabController(
+            length: sources.length,
+            child: Padding(
+              padding: REdgeInsetsDirectional.only(
+                  top: 16,
+                  start: 16
+              ),
+              child: Column(
+                spacing: 16.h,
+                children: [
+                  TabBar(
+                    isScrollable: true,
+                    tabs: sources
+                        .map((source) => Tab(text: source.name))
+                        .toList(),
+                  ),
+                  Expanded(child: Padding(
+                    padding: REdgeInsetsDirectional.only(end: 16),
+                    child: TabBarView(children: sources
+                        .map((source) => ArticlesList(sourceId: source.id??"",))
+                        .toList()),
+                  )),
+                ],
+              ),
             ),
-            Expanded(child: Padding(
-              padding: REdgeInsetsDirectional.only(end: 16),
-              child: TabBarView(children: AppConstants.dummySourcesList
-                  .map((source) =>ArticlesList())
-                  .toList()),
-            )),
-          ],
-        ),
+          );
+        },
       ),
-    );
+    )
+
+
+    /*FutureBuilder(
+        future: ApiManager.getSources(widget.categoryId),
+        builder: (context, snapshot) {
+          if(snapshot.connectionState == ConnectionState.waiting){
+            return Center(child: CircularProgressIndicator(),);
+          }
+          if(snapshot.hasError){
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text("No Internet Connection"),
+                  ElevatedButton(onPressed: () {
+                    setState(() {
+
+                    });
+                  }, child: Text("Try Again"))
+                ],
+              ),
+            );
+          }
+          var response = snapshot.data;
+          if(response?.status == "error"){
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(response?.message??""),
+                  ElevatedButton(onPressed: () {
+                    setState(() {
+
+                    });
+                  }, child: Text("Try Again"))
+                ],
+              ),
+            );
+          }
+          List<Source> sources = response?.sources??[];
+          return DefaultTabController(
+            length: sources.length,
+            child: Padding(
+              padding: REdgeInsetsDirectional.only(
+                  top: 16,
+                  start: 16
+              ),
+              child: Column(
+                spacing: 16.h,
+                children: [
+                  TabBar(
+                    isScrollable: true,
+                    tabs: sources
+                        .map((source) => Tab(text: source.name))
+                        .toList(),
+                  ),
+                  Expanded(child: Padding(
+                    padding: REdgeInsetsDirectional.only(end: 16),
+                    child: TabBarView(children: sources
+                        .map((source) => ArticlesList(sourceId: source.id??"",))
+                        .toList()),
+                  )),
+                ],
+              ),
+            ),
+          );
+        },
+    )*/;
   }
 }

@@ -17,7 +17,11 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   CategoryModel? selectedCategory;
-
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -41,7 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: selectedCategory != null ? ArticlesWidget() : CategoriesWidget(
+      body: selectedCategory != null ? ArticlesWidget(categoryId: selectedCategory!.id,) : CategoriesWidget(
         onCategoryClicked: chooseCategory,
       ),
     );
